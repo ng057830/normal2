@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de Duración de Bombillas - Distribución Normal</title>
+    <style>
+      /* Paleta moderna */
+      :root {
+        --primary: #2980b9;
+        --secondary: #3498db;
+        --accent: #27ae60;
+        --bg: #ecf0f1;
+        --card-bg: #ffffff;
+        --text-color: #2c3e50;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text-color);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 1rem auto;
+        padding: 1rem 2rem;
+      }
+      header {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+      header h1 {
+        font-size: 2.5rem;
+        color: var(--primary);
+        margin-bottom: 0.2rem;
+      }
+      header p {
+        font-size: 1.1rem;
+        color: var(--secondary);
+      }
+      /* Pestañas */
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .tab {
+        padding: 0.75rem 1.5rem;
+        background: var(--card-bg);
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        color: var(--text-color);
+      }
+      .tab.active {
+        border-bottom: 3px solid var(--primary);
+      }
+      .tab:hover {
+        background: var(--bg);
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+        animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      /* Tarjetas */
+      .card {
+        background: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+      }
+      /* Controles */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        align-items: center;
+        justify-content: center;
+      }
+      .controls label {
+        font-weight: bold;
+      }
+      select,
+      button {
+        padding: 0.5rem 1rem;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        font-size: 1rem;
+        background: #fff;
+        color: var(--text-color);
+      }
+      button {
+        background: var(--primary);
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+      }
+      /* Resultados */
+      .results {
+        text-align: center;
+      }
+      .results p {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #bdc3c7;
+        border-radius: 4px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+      }
+      .progress {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.3s;
+      }
+      /* Animación de Bombilla */
+      .bulb-container {
+        text-align: center;
+      }
+      .bulb-icon {
+        font-size: 60px;
+        transition: filter 0.3s;
+      }
+      .bulb-on {
+        filter: brightness(1.5);
+      }
+      .bulb-off {
+        filter: brightness(0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Simulador de Duración de Bombillas</h1>
+        <p>
+          Distribución: X ~ N(800, 40) &nbsp;|&nbsp; ¡Descubre cómo se comporta la
+          vida útil de las bombillas!
+        </p>
+      </header>
+      <div class="tabs">
+        <button class="tab active" data-tab="simulacion">Simulación</button>
+        <button class="tab" data-tab="solucion">Solución</button>
+      </div>
+      <!-- Pestaña de Simulación -->
+      <div id="simulacion" class="tab-content active">
+        <div class="card">
+          <div class="controls">
+            <label for="conditionSelect">Selecciona la condición:</label>
+            <select id="conditionSelect">
+              <!-- Se corrigieron los símbolos especiales -->
+              <option value="between778and834">P(778 &amp;lt; X &amp;lt; 834)</option>
+              <option value="below778">P(X &amp;lt; 778)</option>
+              <option value="above834">P(X &amp;gt; 834)</option>
+              <option value="between750and850">P(750 &amp;lt; X &amp;lt; 850)</option>
+              <option value="p90">Percentil 90 (valor empírico)</option>
+            </select>
+          </div>
+          <div class="controls">
+            <label for="numSimulations">Número de simulaciones:</label>
+            <select id="numSimulations">
+              <option value="1">1</option>
+              <option value="10">10</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
+          <div class="controls">
+            <button id="simulateBtn">Simular</button>
+            <button id="resetBtn">Reiniciar</button>
+          </div>
+        </div>
+        <div class="card results">
+          <p>Total de simulaciones: <span id="totalSim">0</span></p>
+          <p id="eventCountText">
+            Observaciones que cumplen la condición:
+            <span id="favorableCount">0</span>
+          </p>
+          <p id="probabilityText">
+            Probabilidad experimental:
+            <span id="expProb">0.00</span>%
+          </p>
+          <p id="quantileText" style="display: none;">
+            Valor empírico: <span id="empiricalQuantile">-</span> horas
+          </p>
+          <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+          </div>
+        </div>
+        <div class="card bulb-container">
+          <p>
+            Última duración simulada:
+            <span id="lastDuration">-</span> horas
+          </p>
+          <!-- El icono de la bombilla cambia de estado según el resultado -->
+          <p class="bulb-icon bulb-off" id="bulbIcon">💡</p>
+        </div>
+      </div>
+      <!-- Pestaña de Solución -->
+      <div id="solucion" class="tab-content">
+        <div class="card" id="solutionCard">
+          <h2>Solución Teórica</h2>
+          <div id="solutionText">
+            <p>Consideremos la duración de las bombillas con:</p>
+            <p>  X ~ N(800, 40²)</p>
+            <p>
+              Fórmula general:  Z = (X − μ) / σ
+            </p>
+            <hr />
+            <p>
+              ▪ <strong>P(778 &amp;lt; X &amp;lt; 834)</strong>:  
+              <br />  • Z₁ = (778 − 800) / 40 = –0.55  
+              <br />  • Z₂ = (834 − 800) / 40 = 0.85  
+              <br />  • P(778 &amp;lt; X &amp;lt; 834) = Φ(0.85) − Φ(–0.55)  
+              <br />    ≈ 0.8023 − 0.2912 = 0.5111 (51.11%)
+            </p>
+            <hr />
+            <p>
+              ▪ <strong>P(X &amp;lt; 778)</strong>:  
+              <br />  • Z = (778 − 800) / 40 = –0.55  
+              <br />  • P(X &amp;lt; 778) ≈ 0.2912 (29.12%)
+            </p>
+            <hr />
+            <p>
+              ▪ <strong>P(X &amp;gt; 834)</strong>:  
+              <br />  • Z = (834 − 800) / 40 = 0.85  
+              <br />  • P(X &amp;gt; 834) = 1 − Φ(0.85) ≈ 1 − 0.8023 = 0.1977 (19.77%)
+            </p>
+            <hr />
+            <p>
+              ▪ <strong>P(750 &amp;lt; X &amp;lt; 850)</strong>:  
+              <br />  • Z₁ = (750 − 800) / 40 = –1.25  
+              <br />  • Z₂ = (850 − 800) / 40 = 1.25  
+              <br />  • P(750 &amp;lt; X &amp;lt; 850) = Φ(1.25) − Φ(–1.25)  
+              <br />    ≈ 0.8944 − 0.1056 = 0.7888 (78.88%)
+            </p>
+            <hr />
+            <p>
+              ▪ <strong>Percentil 90</strong>:  
+              <br />  • Se busca x tal que P(X &amp;lt; x) = 0.90  
+              <br />  • x = 800 + 40 · z₀.₉₀, donde z₀.₉₀ ≈ 1.2816  
+              <br />  • x ≈ 800 + 51.26 ≈ 851.26 horas
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Manejo de Pestañas
+        const tabs = document.querySelectorAll(".tab");
+        const tabContents = document.querySelectorAll(".tab-content");
+        tabs.forEach(tab => {
+          tab.addEventListener("click", () => {
+            tabs.forEach(t => t.classList.remove("active"));
+            tabContents.forEach(tc => tc.classList.remove("active"));
+            tab.classList.add("active");
+            document.getElementById(tab.getAttribute("data-tab")).classList.add("active");
+          });
+        });
+    
+        // Elementos de control
+        const conditionSelect = document.getElementById("conditionSelect");
+        const numSimulationsSelect = document.getElementById("numSimulations");
+        const simulateBtn = document.getElementById("simulateBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const totalSimEl = document.getElementById("totalSim");
+        const favorableCountEl = document.getElementById("favorableCount");
+        const expProbEl = document.getElementById("expProb");
+        const progressEl = document.getElementById("progress");
+        const lastDurationEl = document.getElementById("lastDuration");
+        const bulbIconEl = document.getElementById("bulbIcon");
+        const eventCountTextEl = document.getElementById("eventCountText");
+        const quantileTextEl = document.getElementById("quantileText");
+        const empiricalQuantileEl = document.getElementById("empiricalQuantile");
+    
+        // Variables de simulación
+        let totalSimulations = 0;
+        let favorableCount = 0;
+        let samples = [];
+        let simulationInterval = null;
+    
+        // Función para muestrear de N(800, 40)
+        function sampleNormal(mu, sigma) {
+          const u1 = Math.random();
+          const u2 = Math.random();
+          const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+          return z0 * sigma + mu;
+        }
+    
+        // Actualiza el icono de la bombilla según el resultado
+        function updateBulbIcon(sample, condition) {
+          if (condition === "p90") {
+            // Para condiciones percentílicas, dejamos el icono en estado neutro
+            bulbIconEl.classList.remove("bulb-on");
+            bulbIconEl.classList.add("bulb-off");
+          } else {
+            let meets = false;
+            if (condition === "between778and834") {
+              meets = (sample > 778 && sample < 834);
+            } else if (condition === "below778") {
+              meets = (sample < 778);
+            } else if (condition === "above834") {
+              meets = (sample > 834);
+            } else if (condition === "between750and850") {
+              meets = (sample > 750 && sample < 850);
+            }
+            if (meets) {
+              bulbIconEl.classList.remove("bulb-off");
+              bulbIconEl.classList.add("bulb-on");
+            } else {
+              bulbIconEl.classList.remove("bulb-on");
+              bulbIconEl.classList.add("bulb-off");
+            }
+          }
+        }
+    
+        // Actualiza la visualización de la simulación
+        function updateDisplay(sample, target) {
+          lastDurationEl.textContent = sample.toFixed(2);
+          totalSimEl.textContent = totalSimulations;
+          if (conditionSelect.value !== "p90") {
+            favorableCountEl.textContent = favorableCount;
+            const probExp = totalSimulations ? (favorableCount / totalSimulations * 100) : 0;
+            expProbEl.textContent = probExp.toFixed(2);
+          }
+          let prog = (totalSimulations / target) * 100;
+          if (prog > 100) prog = 100;
+          progressEl.style.width = prog + "%";
+        }
+    
+        // Función para simular un experimento
+        function simulateExperiment() {
+          const condition = conditionSelect.value;
+          const sample = sampleNormal(800, 40);
+          samples.push(sample);
+          totalSimulations++;
+          if (condition !== "p90") {
+            let meets = false;
+            if (condition === "between778and834" && sample > 778 && sample < 834) {
+              meets = true;
+            } else if (condition === "below778" && sample < 778) {
+              meets = true;
+            } else if (condition === "above834" && sample > 834) {
+              meets = true;
+            } else if (condition === "between750and850" && sample > 750 && sample < 850) {
+              meets = true;
+            }
+            if (meets) {
+              favorableCount++;
+            }
+          }
+          updateBulbIcon(sample, condition);
+          updateDisplay(sample, Number(numSimulationsSelect.value));
+        }
+    
+        // Calcula el percentil empírico
+        function computeEmpiricalQuantile(q) {
+          if (samples.length === 0) return null;
+          const sorted = [...samples].sort((a, b) => a - b);
+          const index = Math.floor(q * sorted.length);
+          return sorted[index];
+        }
+    
+        // Ejecuta la simulación con setInterval
+        function runSimulation() {
+          const target = Number(numSimulationsSelect.value);
+          simulationInterval = setInterval(() => {
+            simulateExperiment();
+            if (totalSimulations >= target) {
+              clearInterval(simulationInterval);
+              if (conditionSelect.value === "p90") {
+                const quantile = computeEmpiricalQuantile(0.90);
+                empiricalQuantileEl.textContent = quantile ? quantile.toFixed(2) : "-";
+                quantileTextEl.style.display = "block";
+                eventCountTextEl.style.display = "none";
+                expProbEl.textContent = "-";
+              }
+            }
+          }, 500);
+        }
+    
+        simulateBtn.addEventListener("click", () => {
+          if (simulationInterval) clearInterval(simulationInterval);
+          runSimulation();
+        });
+    
+        resetBtn.addEventListener("click", () => {
+          if (simulationInterval) clearInterval(simulationInterval);
+          totalSimulations = 0;
+          favorableCount = 0;
+          samples = [];
+          totalSimEl.textContent = 0;
+          favorableCountEl.textContent = 0;
+          expProbEl.textContent = "0.00";
+          progressEl.style.width = "0%";
+          lastDurationEl.textContent = "-";
+          bulbIconEl.classList.remove("bulb-on");
+          bulbIconEl.classList.add("bulb-off");
+          quantileTextEl.style.display = "none";
+          eventCountTextEl.style.display = "block";
+        });
+    
+        conditionSelect.addEventListener("change", () => {
+          if (conditionSelect.value === "p90") {
+            eventCountTextEl.style.display = "none";
+            quantileTextEl.style.display = "block";
+          } else {
+            eventCountTextEl.style.display = "block";
+            quantileTextEl.style.display = "none";
+          }
+          resetBtn.click();
+        });
+      });
+    </script>
+  </body>
+</html>
