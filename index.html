@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulador de Duración de Bombillas - Distribución Normal</title>
     <style>
-      /* Paleta moderna */
+      /* Paleta moderna y juvenil */
       :root {
-        --primary: #2980b9;
-        --secondary: #3498db;
-        --accent: #27ae60;
-        --bg: #ecf0f1;
-        --card-bg: #ffffff;
-        --text-color: #2c3e50;
+        --primary: #1abc9c;    /* Turquesa */
+        --secondary: #16a085;  /* Turquesa oscuro */
+        --accent: #f39c12;     /* Naranja */
+        --bg: #f0f2f5;         /* Gris muy claro */
+        --card-bg: #ffffff;    /* Blanco */
+        --text-color: #2c3e50; /* Azul oscuro/gris */
       }
       * {
         box-sizing: border-box;
@@ -151,6 +151,22 @@
       .bulb-off {
         filter: brightness(0.3);
       }
+      /* Tabla para la Solución Teórica */
+      .solution-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+      .solution-table td {
+        vertical-align: top;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #ccc;
+      }
+      .solution-table td:first-child {
+        width: 220px;
+        font-weight: bold;
+        color: var(--primary);
+      }
     </style>
   </head>
   <body>
@@ -172,12 +188,12 @@
           <div class="controls">
             <label for="conditionSelect">Selecciona la condición:</label>
             <select id="conditionSelect">
-              <!-- Se corrigieron los símbolos especiales -->
-              <option value="between778and834">P(778 &amp;lt; X &amp;lt; 834)</option>
-              <option value="below778">P(X &amp;lt; 778)</option>
-              <option value="above834">P(X &amp;gt; 834)</option>
-              <option value="between750and850">P(750 &amp;lt; X &amp;lt; 850)</option>
-              <option value="p90">Percentil 90 (valor empírico)</option>
+              <!-- Usamos &lt; y &gt; para mostrar correctamente los símbolos -->
+              <option value="between778and834">P(778 &lt; X &lt; 834)</option>
+              <option value="below778">P(X &lt; 778)</option>
+              <option value="above834">P(X &gt; 834)</option>
+              <option value="between750and850">P(750 &lt; X &lt; 850)</option>
+              <option value="p90">P(X &lt; 851.26) [≈ 90%]</option>
             </select>
           </div>
           <div class="controls">
@@ -198,15 +214,12 @@
         <div class="card results">
           <p>Total de simulaciones: <span id="totalSim">0</span></p>
           <p id="eventCountText">
-            Observaciones que cumplen la condición:
+            Observaciones favorables:
             <span id="favorableCount">0</span>
           </p>
           <p id="probabilityText">
             Probabilidad experimental:
             <span id="expProb">0.00</span>%
-          </p>
-          <p id="quantileText" style="display: none;">
-            Valor empírico: <span id="empiricalQuantile">-</span> horas
           </p>
           <div class="progress-bar">
             <div class="progress" id="progress"></div>
@@ -217,7 +230,7 @@
             Última duración simulada:
             <span id="lastDuration">-</span> horas
           </p>
-          <!-- El icono de la bombilla cambia de estado según el resultado -->
+          <!-- El icono de la bombilla cambia de estado (apagada/encendida) -->
           <p class="bulb-icon bulb-off" id="bulbIcon">💡</p>
         </div>
       </div>
@@ -225,54 +238,65 @@
       <div id="solucion" class="tab-content">
         <div class="card" id="solutionCard">
           <h2>Solución Teórica</h2>
-          <div id="solutionText">
-            <p>Consideremos la duración de las bombillas con:</p>
-            <p>  X ~ N(800, 40²)</p>
-            <p>
-              Fórmula general:  Z = (X − μ) / σ
-            </p>
-            <hr />
-            <p>
-              ▪ <strong>P(778 &amp;lt; X &amp;lt; 834)</strong>:  
-              <br />  • Z₁ = (778 − 800) / 40 = –0.55  
-              <br />  • Z₂ = (834 − 800) / 40 = 0.85  
-              <br />  • P(778 &amp;lt; X &amp;lt; 834) = Φ(0.85) − Φ(–0.55)  
-              <br />    ≈ 0.8023 − 0.2912 = 0.5111 (51.11%)
-            </p>
-            <hr />
-            <p>
-              ▪ <strong>P(X &amp;lt; 778)</strong>:  
-              <br />  • Z = (778 − 800) / 40 = –0.55  
-              <br />  • P(X &amp;lt; 778) ≈ 0.2912 (29.12%)
-            </p>
-            <hr />
-            <p>
-              ▪ <strong>P(X &amp;gt; 834)</strong>:  
-              <br />  • Z = (834 − 800) / 40 = 0.85  
-              <br />  • P(X &amp;gt; 834) = 1 − Φ(0.85) ≈ 1 − 0.8023 = 0.1977 (19.77%)
-            </p>
-            <hr />
-            <p>
-              ▪ <strong>P(750 &amp;lt; X &amp;lt; 850)</strong>:  
-              <br />  • Z₁ = (750 − 800) / 40 = –1.25  
-              <br />  • Z₂ = (850 − 800) / 40 = 1.25  
-              <br />  • P(750 &amp;lt; X &amp;lt; 850) = Φ(1.25) − Φ(–1.25)  
-              <br />    ≈ 0.8944 − 0.1056 = 0.7888 (78.88%)
-            </p>
-            <hr />
-            <p>
-              ▪ <strong>Percentil 90</strong>:  
-              <br />  • Se busca x tal que P(X &amp;lt; x) = 0.90  
-              <br />  • x = 800 + 40 · z₀.₉₀, donde z₀.₉₀ ≈ 1.2816  
-              <br />  • x ≈ 800 + 51.26 ≈ 851.26 horas
-            </p>
-          </div>
+          <p>
+            Consideremos que la vida útil de las bombillas se distribuye como:
+            <br /><strong>X ~ N(800, 40²)</strong>
+          </p>
+          <p>
+            Fórmula general: <strong>Z = (X − μ) / σ</strong>
+          </p>
+          <table class="solution-table">
+            <tr>
+              <td>P(778 &lt; X &lt; 834)</td>
+              <td>
+                <p>Z₁ = (778 − 800)/40 = −0.55</p>
+                <p>Z₂ = (834 − 800)/40 = 0.85</p>
+                <p>P(778 &lt; X &lt; 834) = Φ(0.85) − Φ(−0.55)</p>
+                <p>≈ 0.8023 − 0.2912 = 0.5111 (51.11%)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>P(X &lt; 778)</td>
+              <td>
+                <p>Z = (778 − 800)/40 = −0.55</p>
+                <p>P(X &lt; 778) ≈ 0.2912 (29.12%)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>P(X &gt; 834)</td>
+              <td>
+                <p>Z = (834 − 800)/40 = 0.85</p>
+                <p>P(X &gt; 834) = 1 − Φ(0.85) ≈ 0.1977 (19.77%)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>P(750 &lt; X &lt; 850)</td>
+              <td>
+                <p>Z₁ = (750 − 800)/40 = −1.25</p>
+                <p>Z₂ = (850 − 800)/40 = 1.25</p>
+                <p>P(750 &lt; X &lt; 850) = Φ(1.25) − Φ(−1.25)</p>
+                <p>≈ 0.8944 − 0.1056 = 0.7888 (78.88%)</p>
+              </td>
+            </tr>
+            <tr>
+              <td>P(X &lt; 851.26)</td>
+              <td>
+                <p>
+                  Se sabe teóricamente que para P(X &lt; 851.26) ≈ 0.90,
+                  ya que:
+                </p>
+                <p>
+                  Z = (851.26 − 800)/40 ≈ 1.2816  ⟹ Φ(1.2816) ≈ 0.90
+                </p>
+              </td>
+            </tr>
+          </table>
         </div>
       </div>
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        // Manejo de Pestañas
+        // Manejo de pestañas
         const tabs = document.querySelectorAll(".tab");
         const tabContents = document.querySelectorAll(".tab-content");
         tabs.forEach(tab => {
@@ -296,14 +320,13 @@
         const lastDurationEl = document.getElementById("lastDuration");
         const bulbIconEl = document.getElementById("bulbIcon");
         const eventCountTextEl = document.getElementById("eventCountText");
-        const quantileTextEl = document.getElementById("quantileText");
-        const empiricalQuantileEl = document.getElementById("empiricalQuantile");
     
         // Variables de simulación
         let totalSimulations = 0;
         let favorableCount = 0;
         let samples = [];
         let simulationInterval = null;
+        const p90Threshold = 851.26;
     
         // Función para muestrear de N(800, 40)
         function sampleNormal(mu, sigma) {
@@ -315,28 +338,24 @@
     
         // Actualiza el icono de la bombilla según el resultado
         function updateBulbIcon(sample, condition) {
+          let meets = false;
           if (condition === "p90") {
-            // Para condiciones percentílicas, dejamos el icono en estado neutro
+            meets = (sample < p90Threshold);
+          } else if (condition === "between778and834") {
+            meets = (sample > 778 && sample < 834);
+          } else if (condition === "below778") {
+            meets = (sample < 778);
+          } else if (condition === "above834") {
+            meets = (sample > 834);
+          } else if (condition === "between750and850") {
+            meets = (sample > 750 && sample < 850);
+          }
+          if (meets) {
+            bulbIconEl.classList.remove("bulb-off");
+            bulbIconEl.classList.add("bulb-on");
+          } else {
             bulbIconEl.classList.remove("bulb-on");
             bulbIconEl.classList.add("bulb-off");
-          } else {
-            let meets = false;
-            if (condition === "between778and834") {
-              meets = (sample > 778 && sample < 834);
-            } else if (condition === "below778") {
-              meets = (sample < 778);
-            } else if (condition === "above834") {
-              meets = (sample > 834);
-            } else if (condition === "between750and850") {
-              meets = (sample > 750 && sample < 850);
-            }
-            if (meets) {
-              bulbIconEl.classList.remove("bulb-off");
-              bulbIconEl.classList.add("bulb-on");
-            } else {
-              bulbIconEl.classList.remove("bulb-on");
-              bulbIconEl.classList.add("bulb-off");
-            }
           }
         }
     
@@ -344,11 +363,9 @@
         function updateDisplay(sample, target) {
           lastDurationEl.textContent = sample.toFixed(2);
           totalSimEl.textContent = totalSimulations;
-          if (conditionSelect.value !== "p90") {
-            favorableCountEl.textContent = favorableCount;
-            const probExp = totalSimulations ? (favorableCount / totalSimulations * 100) : 0;
-            expProbEl.textContent = probExp.toFixed(2);
-          }
+          favorableCountEl.textContent = favorableCount;
+          const probExp = totalSimulations ? (favorableCount / totalSimulations * 100) : 0;
+          expProbEl.textContent = probExp.toFixed(2);
           let prog = (totalSimulations / target) * 100;
           if (prog > 100) prog = 100;
           progressEl.style.width = prog + "%";
@@ -360,31 +377,23 @@
           const sample = sampleNormal(800, 40);
           samples.push(sample);
           totalSimulations++;
-          if (condition !== "p90") {
-            let meets = false;
-            if (condition === "between778and834" && sample > 778 && sample < 834) {
-              meets = true;
-            } else if (condition === "below778" && sample < 778) {
-              meets = true;
-            } else if (condition === "above834" && sample > 834) {
-              meets = true;
-            } else if (condition === "between750and850" && sample > 750 && sample < 850) {
-              meets = true;
+          if (condition === "p90") {
+            if (sample < p90Threshold) {
+              favorableCount++;
             }
-            if (meets) {
+          } else {
+            if (condition === "between778and834" && sample > 778 && sample < 834) {
+              favorableCount++;
+            } else if (condition === "below778" && sample < 778) {
+              favorableCount++;
+            } else if (condition === "above834" && sample > 834) {
+              favorableCount++;
+            } else if (condition === "between750and850" && sample > 750 && sample < 850) {
               favorableCount++;
             }
           }
           updateBulbIcon(sample, condition);
           updateDisplay(sample, Number(numSimulationsSelect.value));
-        }
-    
-        // Calcula el percentil empírico
-        function computeEmpiricalQuantile(q) {
-          if (samples.length === 0) return null;
-          const sorted = [...samples].sort((a, b) => a - b);
-          const index = Math.floor(q * sorted.length);
-          return sorted[index];
         }
     
         // Ejecuta la simulación con setInterval
@@ -394,13 +403,6 @@
             simulateExperiment();
             if (totalSimulations >= target) {
               clearInterval(simulationInterval);
-              if (conditionSelect.value === "p90") {
-                const quantile = computeEmpiricalQuantile(0.90);
-                empiricalQuantileEl.textContent = quantile ? quantile.toFixed(2) : "-";
-                quantileTextEl.style.display = "block";
-                eventCountTextEl.style.display = "none";
-                expProbEl.textContent = "-";
-              }
             }
           }, 500);
         }
@@ -422,18 +424,9 @@
           lastDurationEl.textContent = "-";
           bulbIconEl.classList.remove("bulb-on");
           bulbIconEl.classList.add("bulb-off");
-          quantileTextEl.style.display = "none";
-          eventCountTextEl.style.display = "block";
         });
     
         conditionSelect.addEventListener("change", () => {
-          if (conditionSelect.value === "p90") {
-            eventCountTextEl.style.display = "none";
-            quantileTextEl.style.display = "block";
-          } else {
-            eventCountTextEl.style.display = "block";
-            quantileTextEl.style.display = "none";
-          }
           resetBtn.click();
         });
       });
